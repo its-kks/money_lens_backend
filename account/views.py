@@ -2,6 +2,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenRefreshView
 from account.serializers import UserRegisterSerializer,UserLoginSerializer, UserProfileSerializer, UserChangePasswordSerializer,\
 SendPasswordResetEmailSerializer, UserPasswordResetSerializer
 from django.contrib.auth import authenticate
@@ -13,7 +14,7 @@ from account.models import User
 from django.conf import settings
 import time
 from django.contrib.sessions.models import Session
-
+from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 
 def get_tokens_for_user(user):
   refresh = RefreshToken.for_user(user)
@@ -145,3 +146,11 @@ class UserPasswordResetView(APIView):
     serializer.is_valid(raise_exception=True)
     return Response({'message': 'Password reset successful'}, status=status.HTTP_200_OK)
     
+class UserAccessTokenRefresh(TokenRefreshView):
+  renderer_classes = (UserRenderer,)
+  def post(self, request):
+    serializer = TokenRefreshSerializer(data=request.data)
+    if serializer.is_valid():
+      return Response(serializer.validated_data, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+     
